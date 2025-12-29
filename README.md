@@ -1,5 +1,15 @@
 # Training on SQLAlchemy
 
+## Get start
+
+This project need Python 3.12 and uses `uv` as dependency management.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+uv sync
+```
+
 ## Docker
 
 Start PostgreSQL
