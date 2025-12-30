@@ -3,18 +3,25 @@
 - Create a table using Alchemy ORM.
 - Use mixins to refactor codes.
 - Use Annotated to refactor codes.
+- Using SQLAlchemy to Create Tables in the Database.
 """
 
-from abc import ABC
 from datetime import datetime
-from typing import Optional
-from typing_extensions import Annotated
-from sqlalchemy import BIGINT, TIMESTAMP, VARCHAR, ForeignKey, Integer, func
+from typing import Annotated, Optional
+
+from sqlalchemy import (
+    BIGINT,
+    TIMESTAMP,
+    VARCHAR,
+    ForeignKey,
+    Integer,
+    func,
+)
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
-    mapped_column,
     declared_attr,
+    mapped_column,
 )
 
 int_pk = Annotated[int, mapped_column(Integer, primary_key=True)]
@@ -23,6 +30,7 @@ user_pk = Annotated[
     mapped_column(
         ForeignKey("users.telegram_id", ondelete="SET NULL"),
         nullable=True,
+        autoincrement=False,
     ),
 ]
 str_255 = Annotated[str, mapped_column(VARCHAR(255))]
@@ -45,17 +53,17 @@ class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP,
         nullable=False,
-        server_default=func.now,
+        server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP,
         nullable=False,
-        server_default=func.now,
+        server_default=func.now(),
         onupdate=func.now,
     )
 
 
-class Base(DeclarativeBase, ABC):
+class Base(DeclarativeBase):
     """Clone DeclarativeBase for use."""
 
 

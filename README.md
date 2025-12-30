@@ -15,5 +15,25 @@ uv sync
 Start PostgreSQL
 
 ```bash
-    docker run --name postgresql -e POSTGRES_PASSWORD=testpassword -e POSTGRES_USER=testuser -e POSTGRES_DB=testuser -p 5432:5432 -d postgres:13.4-alpine
+    docker-compose up
+```
+
+## Migrations
+
+Create migrations
+
+```bash
+    alembic revision --autogenerate -m "initial migration"
+```
+
+Apply migration
+
+```bash
+    alembic upgrade head
+```
+
+Downgrade to the previous migration
+
+```bash
+    alembic downgrade -1
 ```

@@ -2,5 +2,6 @@
     "recommendations": [
         "aaron-bond.better-comments",
         "bierner.markdown-mermaid",
+        "ckolkman.vscode-postgres",
     ]
 }
