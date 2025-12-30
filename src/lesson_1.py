@@ -1,4 +1,9 @@
-"""Create DB connection."""
+"""First lesson:
+
+- Create DB connection.
+- Create a table.
+- Select columns from table.
+"""
 
 import os
 
