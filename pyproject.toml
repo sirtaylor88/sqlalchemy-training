@@ -31,3 +31,8 @@ target-version = "py312"
 # Pylint
 [tool.pylint.MAIN]
 ignore = [".venv"]
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "too-few-public-methods"
+]
