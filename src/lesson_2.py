@@ -2,13 +2,30 @@
 
 - Create a table using Alchemy ORM.
 - Use mixins to refactor codes.
+- Use Annotated to refactor codes.
 """
 
 from abc import ABC
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import BIGINT, TIMESTAMP, VARCHAR, ForeignKey, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declared_attr
+from typing_extensions import Annotated
+from sqlalchemy import BIGINT, TIMESTAMP, VARCHAR, ForeignKey, Integer, func
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    declared_attr,
+)
+
+int_pk = Annotated[int, mapped_column(Integer, primary_key=True)]
+user_pk = Annotated[
+    BIGINT,
+    mapped_column(
+        ForeignKey("users.telegram_id", ondelete="SET NULL"),
+        nullable=True,
+    ),
+]
+str_255 = Annotated[str, mapped_column(VARCHAR(255))]
 
 
 class TableNameMixin:
@@ -49,19 +66,38 @@ class User(TimestampMixin, TableNameMixin, Base):
         BIGINT,
         primary_key=True,
     )
-    full_name: Mapped[str] = mapped_column(
-        VARCHAR(255),
-        nullable=False,
-    )
-    username: Mapped[Optional[str]] = mapped_column(
-        VARCHAR(255),
-    )
-    language_code: Mapped[str] = mapped_column(
-        VARCHAR(255),
-        nullable=False,
-    )
+    full_name: Mapped[str_255]
+    username: Mapped[Optional[str_255]]
+    language_code: Mapped[str_255]
+    referrer_id: Mapped[Optional[user_pk]]
 
-    referrer_id: Mapped[Optional[int]] = mapped_column(
-        BIGINT,
-        ForeignKey("users.telegram_id", ondelete="SET NULL"),
+
+class Product(TimestampMixin, TableNameMixin, Base):
+    """Product."""
+
+    product_id: Mapped[int_pk]
+    title: Mapped[str_255]
+    description: Mapped[Optional[str_255]]
+
+
+class Order(TimestampMixin, TableNameMixin, Base):
+    """Order"""
+
+    order_id: Mapped[int_pk]
+    user_id: Mapped[user_pk]
+
+
+class OrderProduct(TableNameMixin, Base):
+    """Intermediary table to link orders and products."""
+
+    order_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("orders.order_id", ondelete="CASCADE"),
+        primary_key=True,
     )
+    product_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("products.product_id", ondelete="RESTRICT"),
+        primary_key=True,
+    )
+    quantity: Mapped[int]

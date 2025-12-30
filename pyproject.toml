@@ -34,5 +34,6 @@ ignore = [".venv"]
 
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
-    "too-few-public-methods"
+    "too-few-public-methods",
+    "invalid-name"
 ]
