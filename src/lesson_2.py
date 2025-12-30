@@ -1,23 +1,50 @@
 """Second lesson:
 
 - Create a table using Alchemy ORM.
+- Use mixins to refactor codes.
 """
 
 from abc import ABC
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import BIGINT, TIMESTAMP, VARCHAR, ForeignKey, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declared_attr
+
+
+class TableNameMixin:
+    """Mixin to generate table name."""
+
+    @classmethod
+    @declared_attr.directive
+    def __tablename__(cls) -> str:
+        """Build table name from class name."""
+
+        return cls.__name__.lower() + "s"
+
+
+class TimestampMixin:
+    """Mixin to add timestamps to records."""
+
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.now,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP,
+        nullable=False,
+        server_default=func.now,
+        onupdate=func.now,
+    )
 
 
 class Base(DeclarativeBase, ABC):
     """Clone DeclarativeBase for use."""
 
 
-class User(Base):
+class User(TimestampMixin, TableNameMixin, Base):
     """Telegram user."""
 
-    __tablename__ = "users"
     telegram_id: Mapped[int] = mapped_column(
         BIGINT,
         primary_key=True,
@@ -33,11 +60,7 @@ class User(Base):
         VARCHAR(255),
         nullable=False,
     )
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP,
-        nullable=False,
-        server_default=func.now,
-    )
+
     referrer_id: Mapped[Optional[int]] = mapped_column(
         BIGINT,
         ForeignKey("users.telegram_id", ondelete="SET NULL"),
