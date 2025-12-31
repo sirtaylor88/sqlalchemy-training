@@ -1,15 +1,11 @@
 """Module to build database connection from config."""
 
-import os
 from logging.config import fileConfig
 
-from dotenv import find_dotenv, load_dotenv
-from sqlalchemy import URL, engine_from_config, pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from sqlalchemy_training import lesson_2
-
-load_dotenv(find_dotenv())
+from sqlalchemy_training import lesson_1, lesson_2
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,19 +16,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-database_url = URL.create(
-    drivername="postgresql+psycopg2",  # * postgresql + library we are using (psycopg2)
-    database=os.getenv("POSTGRES_DB"),
-    username=os.getenv("POSTGRES_USER"),
-    password=os.getenv("POSTGRES_PASSWORD"),
-    host=os.getenv("POSTGRES_HOST"),
-    port=os.getenv("POSTGRES_PORT"),
-)
-
 # ! need to set hide_password to False so the DATABASE_URL are correctly injected.
 config.set_main_option(
     "sqlalchemy.url",
-    database_url.render_as_string(hide_password=False),
+    lesson_1.database_url.render_as_string(hide_password=False),
 )
 
 # add your model's MetaData object here

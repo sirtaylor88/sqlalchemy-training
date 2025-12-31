@@ -11,6 +11,7 @@ from typing import Annotated, Optional
 
 from sqlalchemy import (
     BIGINT,
+    DECIMAL,
     TIMESTAMP,
     VARCHAR,
     ForeignKey,
@@ -75,8 +76,8 @@ class User(TimestampMixin, TableNameMixin, Base):
         primary_key=True,
     )
     full_name: Mapped[str_255]
-    username: Mapped[Optional[str_255]]
-    language_code: Mapped[str_255]
+    user_name: Mapped[Optional[str_255]]
+    language_code: Mapped[str] = mapped_column(VARCHAR(10))
     referrer_id: Mapped[Optional[user_pk]]
 
 
@@ -85,7 +86,8 @@ class Product(TimestampMixin, TableNameMixin, Base):
 
     product_id: Mapped[int_pk]
     title: Mapped[str_255]
-    description: Mapped[Optional[str_255]]
+    description: Mapped[Optional[str_255]] = mapped_column(VARCHAR(3000))
+    price: Mapped[float] = mapped_column(DECIMAL(precision=16, scale=4))
 
 
 class Order(TimestampMixin, TableNameMixin, Base):
