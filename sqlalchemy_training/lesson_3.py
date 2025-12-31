@@ -4,14 +4,16 @@
 - Advanced Select queries.
 - Combining Insert, Select and Update in a Single Query
 - Seed initial data to the DB.
+- ORM Joins queries
 """
 
 from typing import Optional, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
+from sqlalchemy_training.lesson_1 import session_maker
 from sqlalchemy_training.lesson_2 import Order, OrderProduct, Product, User
 
 
@@ -143,3 +145,25 @@ class Repo:
 
         self.session.execute(stmt)
         self.session.commit()
+
+    def select_all_invited_users(self):
+        """Get all invited users."""
+
+        ParentUser = aliased(User)
+        ReferralUser = aliased(User)
+
+        stmt = select(
+            ParentUser.full_name.label("parent_name"),
+            ReferralUser.full_name.label("referrer_name"),
+        ).join(ReferralUser, ReferralUser.referrer_id == ParentUser.telegram_id)
+
+        results = self.session.execute(stmt)
+        self.session.commit()
+        return results.all()
+
+
+if __name__ == "__main__":
+    with session_maker() as session:
+        repo = Repo(session)
+        for row in repo.select_all_invited_users():
+            print(f"Parent: {row.parent_name}, Referral: {row.referrer_name}")
