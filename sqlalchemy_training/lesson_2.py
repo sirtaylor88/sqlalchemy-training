@@ -4,6 +4,7 @@
 - Use mixins to refactor codes.
 - Use Annotated to refactor codes.
 - Using SQLAlchemy to Create Tables in the Database.
+- Add relationships between tables.
 """
 
 from datetime import datetime
@@ -23,6 +24,7 @@ from sqlalchemy.orm import (
     Mapped,
     declared_attr,
     mapped_column,
+    relationship,
 )
 
 int_pk = Annotated[int, mapped_column(Integer, primary_key=True)]
@@ -80,6 +82,8 @@ class User(TimestampMixin, TableNameMixin, Base):
     language_code: Mapped[str] = mapped_column(VARCHAR(10))
     referrer_id: Mapped[Optional[user_pk]]
 
+    orders: Mapped[list["Order"]] = relationship(back_populates="user")
+
 
 class Product(TimestampMixin, TableNameMixin, Base):
     """Product."""
@@ -96,6 +100,9 @@ class Order(TimestampMixin, TableNameMixin, Base):
     order_id: Mapped[int_pk]
     user_id: Mapped[user_pk]
 
+    products: Mapped[list["OrderProduct"]] = relationship()
+    user: Mapped[User] = relationship(back_populates="orders")
+
 
 class OrderProduct(TableNameMixin, Base):
     """Intermediary table to link orders and products."""
@@ -111,3 +118,5 @@ class OrderProduct(TableNameMixin, Base):
         primary_key=True,
     )
     quantity: Mapped[int]
+
+    product: Mapped[Product] = relationship()
