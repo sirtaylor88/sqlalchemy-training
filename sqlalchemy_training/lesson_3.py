@@ -6,11 +6,12 @@
 - Seed initial data to the DB.
 - ORM Joins queries.
 - Advanced select queries with join.
+- Aggregated Queries.
 """
 
 from typing import Optional, Sequence
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.row import Row
 from sqlalchemy.orm import Session, aliased, sessionmaker
@@ -199,6 +200,41 @@ class Repo:
         results = self.session.execute(stmt)
         self.session.commit()
         return results.all()
+
+    def get_total_of_orders(self, telegram_id: int) -> int:
+        """Get total number of orders from an user."""
+        stmt = select(func.count(Order)).where(Order.user_id == telegram_id)
+        result = self.session.scalar(stmt)
+        self.session.commit()
+        return result
+
+    def get_total_of_orders_per_user(self) -> Sequence[Row[tuple[int, str]]]:
+        """Get total number of orders per user."""
+        stmt = (
+            select(func.count(Order), User.full_name)
+            .join(User)
+            .group_by(User.telegram_id)
+        )
+        result = self.session.execute(stmt)
+        self.session.commit()
+        return result.all()
+
+    def get_total_of_ordered_products_per_user(
+        self,
+    ) -> Sequence[Row[tuple[int, str]]]:
+        """Get total number of ordered  productsper user."""
+        stmt = (
+            select(
+                func.sum(OrderProduct.quantity).label("quantity"),
+                User.full_name,
+            )
+            .join(Order, Order.order_id == OrderProduct.order_id)
+            .join(User)
+            .group_by(User.telegram_id)
+        )
+        result = self.session.execute(stmt)
+        self.session.commit()
+        return result.all()
 
 
 if __name__ == "__main__":
