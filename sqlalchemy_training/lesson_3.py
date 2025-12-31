@@ -4,16 +4,18 @@
 - Advanced Select queries.
 - Combining Insert, Select and Update in a Single Query
 - Seed initial data to the DB.
-- ORM Joins queries
+- ORM Joins queries.
+- Advanced select queries with join.
 """
 
 from typing import Optional, Sequence
 
-from sqlalchemy import select
+from sqlalchemy import create_engine, select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.engine.row import Row
+from sqlalchemy.orm import Session, aliased, sessionmaker
 
-from sqlalchemy_training.lesson_1 import session_maker
+from sqlalchemy_training.lesson_1 import database_url
 from sqlalchemy_training.lesson_2 import Order, OrderProduct, Product, User
 
 
@@ -68,8 +70,21 @@ class Repo:
 
         return result.scalars().first()
 
-    def get_last_ten_users(self) -> Sequence[User]:
+    def get_all_users(self) -> Sequence[User]:
         """Select all users in DB."""
+
+        stmt = select(
+            User,
+        ).order_by(
+            User.created_at.desc(),
+        )
+        results = self.session.execute(stmt)
+        self.session.commit()
+
+        return results.scalars().all()
+
+    def get_last_ten_users(self) -> Sequence[User]:
+        """Select last ten users in DB."""
 
         stmt = (
             select(
@@ -146,7 +161,7 @@ class Repo:
         self.session.execute(stmt)
         self.session.commit()
 
-    def select_all_invited_users(self):
+    def select_all_invited_users(self) -> Sequence[Row[tuple[str, str]]]:
         """Get all invited users."""
 
         ParentUser = aliased(User)
@@ -161,9 +176,55 @@ class Repo:
         self.session.commit()
         return results.all()
 
+    def get_all_user_orders(
+        self, telegram_id: int
+    ) -> Sequence[Row[tuple[Order, User]]]:
+        """Get all orders from an user."""
+
+        stmt = (
+            select(
+                Product,
+                Order,
+                User.user_name,
+                OrderProduct.quantity,
+            )
+            .join(OrderProduct)
+            .join(Order)
+            .join(User)
+            .select_from(Product)
+            .where(
+                User.telegram_id == telegram_id,
+            )
+        )
+        results = self.session.execute(stmt)
+        self.session.commit()
+        return results.all()
+
 
 if __name__ == "__main__":
+    engine = create_engine(database_url)
+    session_maker = sessionmaker(engine)
     with session_maker() as session:
         repo = Repo(session)
-        for row in repo.select_all_invited_users():
-            print(f"Parent: {row.parent_name}, Referral: {row.referrer_name}")
+        # for row in repo.select_all_invited_users():
+        #     print(f"Parent: {row.parent_name}, Referral: {row.referrer_name}")
+
+        # for user in repo.get_all_users():
+        #     print(f"User: {user.full_name} ({user.telegram_id})")
+
+        #     for order in user.orders:
+        #         print(f"    Order: {order.order_id}")
+
+        #         for product in order.products:
+        #             print(f"    - Product: {product.product.title}")
+
+        user_orders = repo.get_all_user_orders(telegram_id=18)
+        # for row in user_orders:
+        #     print(
+        #         f"Product: {row.Product.title}: Order: {row.Order.order_id}: {row.user_name}"
+        #     )
+
+        for product, order, user_name, amount in user_orders:
+            print(
+                f"Product: {product.title} x {amount}: Order: {order.order_id}: {user_name}"
+            )

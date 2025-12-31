@@ -5,7 +5,7 @@ import random
 from faker import Faker
 
 from sqlalchemy_training.lesson_1 import session_maker
-from sqlalchemy_training.lesson_2 import Order, Product, User
+from sqlalchemy_training.lesson_2 import Order, OrderProduct, Product, User
 from sqlalchemy_training.lesson_3 import Repo
 
 Faker.seed(0)
@@ -17,9 +17,10 @@ repo = Repo(session)
 
 def delete_records() -> None:
     """Delete all records."""
-    session.query(User).delete()
-    session.query(Order).delete()
+    session.query(OrderProduct).delete()
     session.query(Product).delete()
+    session.query(Order).delete()
+    session.query(User).delete()
     session.commit()
 
 
