@@ -3,6 +3,7 @@
 - Insert queries using ORM.
 - Advanced Select queries.
 - Combining Insert, Select and Update in a Single Query
+- Seed initial data to the DB.
 """
 
 from typing import Optional, Sequence
@@ -11,8 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from sqlalchemy_training.lesson_1 import session_maker
-from sqlalchemy_training.lesson_2 import User
+from sqlalchemy_training.lesson_2 import Order, OrderProduct, Product, User
 
 
 class Repo:
@@ -30,7 +30,7 @@ class Repo:
         lang: str,
         username: Optional[str] = None,
         referrer_id: Optional[int] = None,
-    ) -> None:
+    ) -> User:
         """Add new user to DB."""
 
         stmt = select(User).from_statement(
@@ -42,7 +42,6 @@ class Repo:
                 user_name=username,
                 referrer_id=referrer_id,
             )
-            .returning(User)
             .on_conflict_do_update(
                 index_elements=[User.telegram_id],
                 set_={
@@ -50,12 +49,13 @@ class Repo:
                     "full_name": full_name,
                 },
             )
+            .returning(User)
         )
 
-        result = self.session.scalars(stmt).first()
+        result = self.session.scalars(stmt)
         self.session.commit()
 
-        return result
+        return result.first()
 
     def get_user_by_id(self, telegram_id: int) -> User:
         """Select an user by its ID."""
@@ -78,10 +78,10 @@ class Repo:
             )
             .limit(10)
         )
-        result = self.session.execute(stmt)
+        results = self.session.execute(stmt)
         self.session.commit()
 
-        return result.scalars().all()
+        return results.scalars().all()
 
     def get_user_lang(self, telegram_id: int) -> str:
         """Select an user by its ID."""
@@ -96,20 +96,50 @@ class Repo:
 
         return result.scalars()
 
+    def add_order(self, user_id: int) -> Order:
+        """Add a new order to the DB."""
 
-if __name__ == "__main__":
-    with session_maker() as session:
-        repo = Repo(session)
+        stmt = insert(Order).values(user_id=user_id).returning(Order)
 
-        # repo.add_user(
-        #     telegram_id=1,
-        #     full_name="Nhat Tai NGUYEN",
-        #     lang="fr",
-        #     username="Darth Glorious",
-        # )
+        results = self.session.scalars(stmt)
+        self.session.commit()
 
-        user = repo.get_user_by_id(1)
-        print(user)
+        return results.first()
 
-        users = repo.get_last_ten_users()
-        print(users)
+    def add_product(
+        self,
+        title: str,
+        price: int,
+        description: Optional[str] = None,
+    ) -> Product:
+        """Add a new product to the DB."""
+        stmt = select(Product).from_statement(
+            insert(Product)
+            .values(title=title, description=description, price=price)
+            .returning(Product)
+        )
+
+        results = self.session.scalars(stmt)
+        self.session.commit()
+
+        return results.first()
+
+    def add_product_to_order(
+        self,
+        product_id: int,
+        order_id: int,
+        quantity: int,
+    ) -> None:
+        """Add a new product to the DB."""
+        stmt = (
+            insert(OrderProduct)
+            .values(
+                product_id=product_id,
+                order_id=order_id,
+                quantity=quantity,
+            )
+            .on_conflict_do_nothing()
+        )
+
+        self.session.execute(stmt)
+        self.session.commit()
