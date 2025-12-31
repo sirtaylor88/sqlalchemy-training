@@ -7,11 +7,12 @@
 - ORM Joins queries.
 - Advanced select queries with join.
 - Aggregated Queries.
+- Update, delete and bulk insert.
 """
 
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import bindparam, create_engine, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.row import Row
 from sqlalchemy.orm import Session, aliased, sessionmaker
@@ -235,6 +236,32 @@ class Repo:
         result = self.session.execute(stmt)
         self.session.commit()
         return result.all()
+
+    def set_new_referrer(self, user_id: int, referrer_id: int) -> None:
+        """Update an user with nre referrer ID."""
+        stmt = (
+            update(User)
+            .where(User.telegram_id == user_id)
+            .values(referrer_id=referrer_id)
+        )
+        self.session.execute(stmt)
+        self.session.commit()
+
+    def delete_user_by_id(self, user_id: int) -> None:
+        """Delete an user by its ID."""
+        stmt = delete(User).where(User.telegram_id == user_id)
+        self.session.execute(stmt)
+        self.session.commit()
+
+    def bulk_add_order_products(self, order_id: int, products: list[dict[str, Any]]):
+        """Bulk add products to an order."""
+        stmt = insert(OrderProduct).values(
+            order_id=order_id,
+            product_id=bindparam("product_id"),
+            quantity=bindparam("quantity"),
+        )
+        self.session.execute(stmt, products)
+        self.session.commit()
 
 
 if __name__ == "__main__":
